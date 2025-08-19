@@ -1,0 +1,8 @@
+[package]
+name = "kmac"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+digest = { version = "0.11.0-rc.0", features = ["mac"] }
+sha3 = "0.11.0-rc.0"
