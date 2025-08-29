@@ -27,8 +27,10 @@ macro_rules! impl_kmac {
             /// Create a new KMAC with the given key and customisation.
             #[inline]
             pub fn new_customization(key: &[u8], customisation: &[u8]) -> Result<Self, InvalidLength> {
+                // TODO: KeyInitWithCustomization trait, following KeyInit as new_with_customization and new_from_slice_with_customization.
+                // TODO: review the Result, as this implementation is infallible. Currently matching KeyInit::new_from_slice.
                 // FUTURE: support key+customisation initialisation via traits.
-                let core = KmacCore::<$cshake>::new_customization(key, customisation)?;
+                let core = KmacCore::<$cshake>::new_customization(key, customisation);
                 let buffer = Buffer::<KmacCore<$cshake>>::default();
                 Ok(Self { core, buffer })
             }
@@ -37,6 +39,8 @@ macro_rules! impl_kmac {
             /// by the `out` variable's `ArraySize`.
             #[inline]
             pub fn finalize_fixed(&mut self, out: &mut Output<Self>) {
+                // TODO: review method naming.
+                // TODO: runtime-determined output sizes, eg. runtime variable buffer sizes
                 // FUTURE: support custom output sizes via traits.
                 let buffer = &mut self.buffer;
                 self.core.finalize_core(buffer, out);
@@ -86,4 +90,4 @@ macro_rules! impl_kmac {
 }
 
 impl_kmac!(Kmac128, CShake128, Kmac128Reader, U168, U32);
-impl_kmac!(Kmac256, CShake256, Kmac251Reader, U136, U64);
+impl_kmac!(Kmac256, CShake256, Kmac256Reader, U136, U64);

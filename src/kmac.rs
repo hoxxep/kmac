@@ -11,6 +11,7 @@ pub struct KmacCore<D: EagerHash> {
 }
 
 impl<D: EagerHash> Clone for KmacCore<D> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self {
             digest: self.digest.clone(),
@@ -34,7 +35,7 @@ impl<D: EagerHash> BlockSizeUser for KmacCore<D> {
 
 impl<D: EagerHash> KmacCore<D> {
     #[inline(always)]
-    pub fn new_customization(key: &[u8], customisation: &[u8]) -> Result<Self, InvalidLength> {
+    pub fn new_customization(key: &[u8], customisation: &[u8]) -> Self {
         // digest: bufpad(encode_string(K), bufsize) || X || right_encode(L)
         //   where bufpad(X, w) = left_encode(len(w)) || X || zeros
         //   where encode_string(K) = left_encode(len(K)) || K
@@ -63,22 +64,21 @@ impl<D: EagerHash> KmacCore<D> {
         // bytepad, pad the key to the block size
         digest.update_blocks(&[buffer.pad_with_zeros()]);
 
-        Ok(Self {
+        Self {
             digest,
-        })
+        }
     }
 }
 
 impl<D: EagerHash> KeyInit for KmacCore<D> {
-    // TODO: new with customisation vector
     #[inline]
     fn new(key: &Key<Self>) -> Self {
-        Self::new_from_slice(key.as_slice()).unwrap()
+        Self::new_customization(key.as_slice(), &[])
     }
 
     #[inline(always)]
     fn new_from_slice(key: &[u8]) -> Result<Self, InvalidLength> {
-        Self::new_customization(key, &[])
+        Ok(Self::new_customization(key, &[]))
     }
 }
 
