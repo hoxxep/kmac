@@ -26,6 +26,7 @@ pub(crate) fn right_encode(num: u64, buffer: &mut [u8; 9]) -> &[u8] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    extern crate std;
 
     #[test]
     fn test_num_encoding_size() {
@@ -69,7 +70,7 @@ mod tests {
 
         for i in 0..usize::BITS {
             let x: usize = 1 << i;
-            let mut want = vec![0; 1];
+            let mut want = std::vec![0; 1];
             want.extend(x.to_be_bytes().iter().skip_while(|&&v| v == 0));
             want[0] = (want.len() - 1) as u8;
             assert_eq!(left_encode(x as u64, &mut buf), want, "#{x}");
@@ -87,7 +88,7 @@ mod tests {
 
         for i in 0..usize::BITS {
             let x: usize = 1 << i;
-            let mut want = Vec::from_iter(x.to_be_bytes().iter().copied().skip_while(|&v| v == 0));
+            let mut want = std::vec::Vec::from_iter(x.to_be_bytes().iter().copied().skip_while(|&v| v == 0));
             want.push(want.len() as u8);
             assert_eq!(right_encode(x as u64, &mut buf), want, "#{x}");
         }

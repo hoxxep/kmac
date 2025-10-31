@@ -2,7 +2,6 @@ use core::fmt;
 use digest::block_api::{AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, Eager, ExtendableOutputCore, FixedOutputCore, UpdateCore, XofReaderCore};
 use digest::crypto_common::KeySizeUser;
 use digest::{InvalidLength, Key, KeyInit, MacMarker, Output, OutputSizeUser};
-use digest::array::{Array, ArraySize};
 use crate::encoding::{left_encode, right_encode};
 use crate::traits::{CShake, EagerHash};
 
@@ -92,21 +91,20 @@ impl<D: EagerHash> UpdateCore for KmacCore<D> {
 impl<D: EagerHash> KmacCore<D> {
     /// Finalizes the KMAC for any output array size.
     #[inline(always)]
-    pub fn finalize_core<S: ArraySize>(&mut self, buffer: &mut Buffer<Self>, out: &mut Array<u8, S>) {
+    pub fn finalize_core(&mut self, buffer: &mut Buffer<Self>, out: &mut [u8]) {
         // right_encode(L), where L = output length in bits
         buffer.digest_blocks(
-            right_encode(8 * S::U64, &mut [0u8; 9]),
+            right_encode(8 * out.len() as u64, &mut [0u8; 9]),
             |blocks| self.update_blocks(blocks)
         );
 
         let mut reader = self.digest.finalize_xof_core(buffer);
-        let out_slice = out.as_mut_slice();
 
         let mut pos = 0;
-        while pos < out_slice.len() {
+        while pos < out.len() {
             let block = reader.read_block();
-            let to_copy = core::cmp::min(out_slice.len() - pos, block.len());
-            out_slice[pos..pos + to_copy].copy_from_slice(&block[..to_copy]);
+            let to_copy = core::cmp::min(out.len() - pos, block.len());
+            out[pos..pos + to_copy].copy_from_slice(&block[..to_copy]);
             pos += to_copy;
         }
     }
@@ -118,7 +116,7 @@ where
 {
     #[inline(always)]
     fn finalize_fixed_core(&mut self, buffer: &mut Buffer<Self>, out: &mut Output<Self>) {
-        self.finalize_core(buffer, out);
+        self.finalize_core(buffer, out.as_mut_slice());
     }
 }
 
